@@ -7,14 +7,14 @@ import Admin from './Admin';
 import Leaderboard from './Leaderboard';
 import vivaLogo from './assets/logo.jpg';
 import StartList from './StartList';
-
+import { API_BASE_URL } from './config';
 function App() {
   const [notice, setNotice] = useState(null);
 
   useEffect(() => {
     const fetchNotice = async () => {
       try {
-        const res = await axios.get('http://127.0.0.1:8000/api/notices/');
+        const res = await axios.get(`${API_BASE_URL}/api/notices/`);
         if (res.data.length > 0) {
           setNotice(res.data[0].content);
         } else {

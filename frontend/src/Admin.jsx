@@ -12,7 +12,7 @@ import { API_BASE_URL } from './config'; // config.js가 없다면 아래 줄 �
 
 
 // ★ 설정: 여기서 비밀번호를 바꾸세요!
-const ADMIN_PASSWORD = "viva"; 
+const ADMIN_PASSWORD = "viva365";
 const API_BASE = `${API_BASE_URL}/api`;
 
 export default function Admin() {

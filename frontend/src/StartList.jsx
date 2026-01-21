@@ -2,13 +2,13 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FaUserAstronaut, FaCheck, FaHourglassHalf } from 'react-icons/fa';
-
+import { API_BASE_URL } from './config';
 export default function StartList() {
   const [racers, setRacers] = useState([]);
 
   const fetchData = () => {
     // 새로 만든 startlist API 호출
-    axios.get('http://127.0.0.1:8000/api/startlist/')
+    axios.get(`${API_BASE_URL}/api/startlist/`)
       .then(res => setRacers(res.data));
   };
 

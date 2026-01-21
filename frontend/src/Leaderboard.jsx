@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FaMedal, FaFlagCheckered, FaBan, FaTimesCircle, FaExclamationTriangle } from 'react-icons/fa';
-
+import { API_BASE_URL } from './config';
 export default function Leaderboard() {
   const [racers, setRacers] = useState([]);
 
   const fetchData = () => {
-    axios.get('http://127.0.0.1:8000/api/racers/')
+    axios.get(`${API_BASE_URL}/api/racers/`)
       .then(res => setRacers(res.data));
   };
 
