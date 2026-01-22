@@ -12,6 +12,7 @@ class Racer(models.Model):
 
     bib_number = models.IntegerField(unique=True)
     name = models.CharField(max_length=50, blank=True)
+    category = models.CharField(max_length=50, blank=True, null=True)
     record = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='START')
     updated_at = models.DateTimeField(auto_now=True)
