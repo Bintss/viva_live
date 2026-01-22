@@ -9,7 +9,7 @@ import {
 
 import { API_BASE_URL } from './config'; 
 
-const ADMIN_PASSWORD = "viva"; 
+const ADMIN_PASSWORD = "viva365"; 
 const API_BASE = `${API_BASE_URL}/api`;
 
 export default function Admin() {
