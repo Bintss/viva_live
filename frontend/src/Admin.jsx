@@ -16,11 +16,13 @@ export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [activeTab, setActiveTab] = useState('timing');
+  
 
   // 계측 상태
   const [bib, setBib] = useState('');
   const [record, setRecord] = useState('');
   const bibRef = useRef(null);
+  const [runType, setRunType] = useState('1');
   
   // 공지 상태
   const [noticeMsg, setNoticeMsg] = useState('');
@@ -61,7 +63,7 @@ export default function Admin() {
   const submitStatus = async (bibNo, timeVal, statusVal) => {
     try {
       await axios.post(`${API_BASE}/racers/input_record/`, { 
-        bib: bibNo, record: timeVal, status: statusVal 
+        bib: bibNo, record: timeVal, status: statusVal, run_type: runType 
       });
       setBib(''); setRecord(''); bibRef.current?.focus();
       if(statusVal === 'FINISH') notify(`${bibNo}번 기록 저장 완료`);
@@ -161,6 +163,27 @@ export default function Admin() {
         <div className="space-y-6 animate-fade-in-up">
            {/* ... (계측 UI는 기존과 동일하므로 그대로 사용하시면 됩니다) ... */}
            <div className="bg-gray-800 p-4 md:p-6 rounded-xl shadow-lg border-l-4 border-red-600">
+           <div className="flex justify-center mb-6 bg-gray-900 p-1 rounded-lg w-fit mx-auto">
+            <button 
+              type="button"
+              onClick={() => setRunType('1')}
+              className={`px-6 py-2 rounded-md font-bold transition-all ${runType === '1' ? 'bg-red-600 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
+            >
+              RUN 1 (1차)
+            </button>
+            <button 
+              type="button"
+              onClick={() => setRunType('2')}
+              className={`px-6 py-2 rounded-md font-bold transition-all ${runType === '2' ? 'bg-red-600 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
+            >
+              RUN 2 (2차)
+            </button>
+           </div>
+
+          <h2 className="text-lg md:text-2xl font-bold text-white mb-4 flex items-center gap-2">
+            <FaStopwatch className="text-red-500" /> 
+            기록 입력 ({runType}차전) {/* 현재 몇 차전인지 표시 */}
+          </h2>
             <h2 className="text-lg md:text-2xl font-bold text-white mb-4 flex items-center gap-2"><FaStopwatch className="text-red-500" /> 기록 입력</h2>
             <form onSubmit={handleRecordSubmit} className="flex flex-col gap-3">
               <div className="flex gap-3">

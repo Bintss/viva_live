@@ -16,11 +16,12 @@ class Racer(models.Model):
     record = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='START')
     updated_at = models.DateTimeField(auto_now=True)
-
+    run_1 = models.CharField(max_length=20, blank=True, null=True)
+    run_2 = models.CharField(max_length=20, blank=True, null=True)
+    
     def __str__(self):
-        return f"{self.bib_number}"
+        return f"{self.bib_number} - {self.name}"
 
-# 이 클래스가 없어서 에러가 난 것입니다. 꼭 포함시켜주세요!
 class Notice(models.Model):
     content = models.CharField(max_length=200) # 공지 내용
     is_active = models.BooleanField(default=True) # 활성화 여부
