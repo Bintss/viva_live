@@ -1,4 +1,3 @@
-# race/views.py
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -11,15 +10,12 @@ class RacerViewSet(viewsets.ModelViewSet):
     serializer_class = RacerSerializer
 
     def get_queryset(self):
-        # 정렬 로직:
-        # 1. 완주(FINISH)가 제일 위
-        # 2. 기록(record) 작은 순 (오름차순)
-        # 3. 나머지는 상태별로 뒤로 보냄
+        # 정렬: 1.완주자 2.기록순(오름차순) 3.나머지
         return Racer.objects.order_by(
             Case(
                 When(status='FINISH', then=0),
                 When(status='START', then=1),
-                default=2 # DNS, DNF, DSQ는 맨 뒤로
+                default=2
             ),
             F('record').asc(nulls_last=True)
         )
@@ -28,42 +24,53 @@ class RacerViewSet(viewsets.ModelViewSet):
     def input_record(self, request):
         bib = request.data.get('bib')
         new_record = request.data.get('record')
-        status = request.data.get('status', 'FINISH') # ✅ 프론트에서 보낸 status 받기!
-        run_type = request.data.get('run_type', '1')
+        status = request.data.get('status', 'FINISH')
         
+        # ★ 핵심: 프론트에서 보내준 '1' 또는 '2'를 받음 (없으면 무조건 '1'로 인식)
+        run_type = str(request.data.get('run_type', '1'))
+
         if not bib:
             return Response({'error': '비브 번호가 필요합니다.'}, status=400)
 
-        # 비브가 있으면 가져오고, 없으면 새로 생성
-        racer, _ = Racer.objects.get_or_create(bib_number=bib)
+        racer, created = Racer.objects.get_or_create(bib_number=bib)
         
-        racer.status = status # ✅ 받은 상태로 저장 (DNS, DNF, DSQ 등)
+        # 상태 업데이트 (출발, 완주, 실격 등)
+        racer.status = status
+
         if status == 'FINISH':
+            # 1. 1차전인지 2차전인지 구분해서 저장
             if run_type == '1':
                 racer.run_1 = new_record
             elif run_type == '2':
                 racer.run_2 = new_record
             
+            # 2. Best Run 계산 (둘 중 빠른 기록 선택)
             records = []
-            if racer.run_1: records.append(float(racer.run_1))
-            if racer.run_2: records.append(float(racer.run_2))
+            try:
+                if racer.run_1: records.append(float(racer.run_1))
+            except: pass # 숫자가 아니면 무시
+            
+            try:
+                if racer.run_2: records.append(float(racer.run_2))
+            except: pass
 
             if records:
-                # 가장 작은 값(빠른 기록)을 최종 record로 설정
+                # 제일 작은 값(빠른 기록)을 최종 record로 저장
                 best_time = min(records)
-                racer.record = f"{best_time:.2f}" 
+                racer.record = f"{best_time:.2f}"
             else:
+                # 기록이 하나도 없으면(둘 다 취소 등) None
                 racer.record = None
-            
-        else:
-            # DNS, DNF, DSQ 등의 경우
-            # (선택 사항: 실격이면 해당 차수 기록을 날릴지, 아니면 상태만 바꿀지 결정 필요.
-            #  여기서는 일단 상태만 바꾸고 기록은 건드리지 않음)
-            pass
-
+        
         racer.save()
         
-        return Response({'status': 'ok', 'final_record': racer.record})
+        return Response({
+            'status': 'ok', 
+            'bib': racer.bib_number,
+            'run_1': racer.run_1,
+            'run_2': racer.run_2,
+            'final_record': racer.record
+        })
 
 class NoticeViewSet(viewsets.ModelViewSet):
     queryset = Notice.objects.filter(is_active=True).order_by('-created_at')
