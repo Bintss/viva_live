@@ -14,8 +14,7 @@ export default function Leaderboard() {
 
   useEffect(() => {
     fetchData();
-    // 서버 부하 관리를 위해 5초(5000ms) 주기로 설정
-    const interval = setInterval(fetchData, 5000);
+    const interval = setInterval(fetchData, 5000); // 5초 주기
     return () => clearInterval(interval);
   }, []);
 
@@ -29,26 +28,33 @@ export default function Leaderboard() {
 
   const getRankBadge = (rank, status) => {
     if (status !== 'FINISH') return <span className="text-gray-600">-</span>;
-    if (rank === 1) return <FaMedal className="text-yellow-500 drop-shadow-lg" size={24} />;
-    if (rank === 2) return <FaMedal className="text-gray-300 drop-shadow-lg" size={24} />;
-    if (rank === 3) return <FaMedal className="text-orange-600 drop-shadow-lg" size={24} />;
+    if (rank === 1) return <FaMedal className="text-yellow-500 drop-shadow-lg" size={20} />;
+    if (rank === 2) return <FaMedal className="text-gray-300 drop-shadow-lg" size={20} />;
+    if (rank === 3) return <FaMedal className="text-orange-600 drop-shadow-lg" size={20} />;
     return <span className="text-sm sm:text-xl font-bold text-gray-500">{rank}</span>;
   };
 
+  // 기록 표시 (1차/2차용 - 작고 회색)
+  const renderSubRecord = (time) => {
+    if (!time) return <span className="text-gray-700 text-[10px] sm:text-sm">-</span>;
+    return <span className="font-mono text-gray-400 text-xs sm:text-lg">{time}</span>;
+  };
+
+  // 최종 결과 표시 (Best - 크고 빨강)
   const renderResult = (r) => {
     switch (r.status) {
       case 'FINISH':
-        return <span className="text-2xl sm:text-4xl font-mono font-extrabold text-red-600 tracking-tighter leading-none drop-shadow-md">{r.record}</span>;
-      case 'DNS': return <span className="inline-flex items-center gap-1 bg-gray-700 text-gray-300 px-2 py-1 rounded text-xs sm:text-lg font-bold"><FaBan /> DNS</span>;
-      case 'DNF': return <span className="inline-flex items-center gap-1 bg-orange-900/50 text-orange-500 px-2 py-1 rounded text-xs sm:text-lg font-bold border border-orange-900"><FaTimesCircle /> DNF</span>;
-      case 'DSQ': return <span className="inline-flex items-center gap-1 bg-red-900/50 text-red-500 px-2 py-1 rounded text-xs sm:text-lg font-bold border border-red-900"><FaExclamationTriangle /> DQ</span>;
-      default: return <span className="inline-flex items-center gap-1 text-gray-600 text-xs sm:text-sm font-bold border border-gray-800 px-2 py-1 rounded">READY</span>;
+        return <span className="text-xl sm:text-3xl font-mono font-extrabold text-red-600 tracking-tighter leading-none drop-shadow-md">{r.record}</span>;
+      case 'DNS': return <span className="inline-flex items-center gap-1 bg-gray-700 text-gray-300 px-1 py-0.5 rounded text-[10px] sm:text-sm font-bold"><FaBan /> DNS</span>;
+      case 'DNF': return <span className="inline-flex items-center gap-1 bg-orange-900/50 text-orange-500 px-1 py-0.5 rounded text-[10px] sm:text-sm font-bold border border-orange-900"><FaTimesCircle /> DNF</span>;
+      case 'DSQ': return <span className="inline-flex items-center gap-1 bg-red-900/50 text-red-500 px-1 py-0.5 rounded text-[10px] sm:text-sm font-bold border border-red-900"><FaExclamationTriangle /> DQ</span>;
+      default: return <span className="inline-flex items-center gap-1 text-gray-600 text-[10px] sm:text-xs font-bold border border-gray-800 px-1 py-0.5 rounded">READY</span>;
     }
   };
 
   return (
     <div className="bg-black rounded-xl shadow-2xl overflow-hidden border border-gray-800 flex flex-col h-[calc(100vh-140px)]">
-      {/* 헤더 (고정) */}
+      {/* 헤더 */}
       <div className="p-3 sm:p-5 bg-gray-900 border-b border-gray-800 flex justify-between items-center shrink-0">
         <h2 className="text-lg sm:text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
             <FaFlagCheckered className="text-red-600" /> LIVE RANKING
@@ -59,37 +65,63 @@ export default function Leaderboard() {
         </div>
       </div>
 
-      {/* 리스트 영역 (스크롤 가능) */}
+      {/* 리스트 영역 */}
       <div className="overflow-y-auto flex-1 custom-scrollbar relative">
         <table className="w-full text-left table-fixed">
           {/* Sticky Header */}
           <thead className="bg-black text-gray-500 uppercase text-[10px] sm:text-sm font-bold tracking-wider sticky top-0 z-10 shadow-md">
             <tr>
-              <th className="p-2 sm:p-5 text-center w-[12%] bg-black">Rank</th>
-              <th className="p-2 sm:p-5 text-center w-[12%] bg-black">Bib</th>
-              <th className="p-2 sm:p-5 w-[26%] bg-black">Name</th>
-              <th className="p-2 sm:p-5 w-[20%] bg-black text-center">Div</th>
-              <th className="p-2 sm:p-5 text-right w-[30%] bg-black">Result</th>
+              <th className="p-2 text-center w-[10%] bg-black">Rank</th>
+              <th className="p-2 text-center w-[10%] bg-black">Bib</th>
+              <th className="p-2 w-[20%] bg-black">Name</th>
+              <th className="p-2 text-center w-[12%] bg-black">Div</th>
+              {/* ✅ R1, R2 추가됨 */}
+              <th className="p-2 text-right w-[14%] bg-black">R1</th>
+              <th className="p-2 text-right w-[14%] bg-black">R2</th>
+              <th className="p-2 text-right w-[20%] bg-black text-white">Best</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-800">
             {racers.map((r) => (
               <tr key={r.id} className={`transition-all duration-300 ${getRowStyle(r.rank, r.status)}`}>
-                <td className="p-2 sm:p-5 text-center align-middle"><div className="flex justify-center items-center">{getRankBadge(r.rank, r.status)}</div></td>
-                <td className="p-2 sm:p-5 text-center"><span className="font-mono text-sm sm:text-2xl font-bold text-gray-300">{r.bib_number}</span></td>
+                {/* Rank */}
+                <td className="p-2 text-center align-middle">
+                    <div className="flex justify-center items-center">{getRankBadge(r.rank, r.status)}</div>
+                </td>
                 
-                <td className="p-2 sm:p-5 overflow-hidden">
-                    <span className="text-sm sm:text-xl font-semibold text-white whitespace-nowrap truncate block">{r.name || <span className="text-gray-700 text-xs">-</span>}</span>
+                {/* Bib */}
+                <td className="p-2 text-center">
+                    <span className="font-mono text-sm sm:text-xl font-bold text-gray-300">{r.bib_number}</span>
+                </td>
+                
+                {/* Name */}
+                <td className="p-2 overflow-hidden">
+                    <span className="text-sm sm:text-lg font-semibold text-white whitespace-nowrap truncate block">
+                        {r.name || <span className="text-gray-700 text-xs">-</span>}
+                    </span>
                 </td>
 
-                {/* 부서 (Category) */}
-                <td className="p-2 sm:p-5 text-center overflow-hidden">
-                     <span className="text-[10px] sm:text-sm font-bold text-gray-400 bg-gray-800 px-2 py-1 rounded whitespace-nowrap truncate block">
+                {/* Div (부서) */}
+                <td className="p-2 text-center overflow-hidden">
+                     <span className="text-[10px] sm:text-xs font-bold text-gray-400 bg-gray-800 px-1.5 py-0.5 rounded whitespace-nowrap truncate block">
                         {r.category || '-'}
                      </span>
                 </td>
 
-                <td className="p-2 sm:p-5 text-right">{renderResult(r)}</td>
+                {/* ✅ Run 1 기록 */}
+                <td className="p-2 text-right border-l border-gray-800/50">
+                    {renderSubRecord(r.run_1)}
+                </td>
+
+                {/* ✅ Run 2 기록 */}
+                <td className="p-2 text-right">
+                    {renderSubRecord(r.run_2)}
+                </td>
+
+                {/* ✅ Best (최종) 기록 */}
+                <td className="p-2 text-right border-l border-gray-800">
+                    {renderResult(r)}
+                </td>
               </tr>
             ))}
           </tbody>
