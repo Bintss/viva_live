@@ -7,7 +7,7 @@ class RacerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Racer
-        fields = '__all__'
+        fields = ['id', 'bib_number', 'name', 'category', 'record', 'status', 'run_1', 'run_2'] + ['rank']
 
     def get_rank(self, obj):
         if obj.status == 'FINISH' and obj.record:
