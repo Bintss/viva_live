@@ -14,12 +14,23 @@ export default function Leaderboard() {
         const data = res.data;
         setRacers(data);
 
-        // 1. 등록된 선수들의 부서 목록 추출 (중복 제거)
-        const cats = [...new Set(data.map(r => r.category).filter(c => c))].sort();
-        setCategories(cats);
-        
-        // 처음에 부서가 선택 안 되어 있으면 첫 번째 부서 자동 선택 (또는 ALL)
-        // (원하시면 'ALL'을 빼고 cats[0]을 기본값으로 해도 됩니다)
+        const minBibByCategory = {};
+
+        data.forEach(r => {
+          if (r.category) {
+            // 아직 기록된 번호가 없거나, 현재 선수의 번호가 더 작으면 갱신
+            if (!minBibByCategory[r.category] || r.bib_number < minBibByCategory[r.category]) {
+              minBibByCategory[r.category] = r.bib_number;
+            }
+          }
+        });
+
+        // 2. 찾아낸 "가장 작은 번호"를 기준으로 부서 이름을 정렬합니다. (오름차순)
+        const sortedCats = Object.keys(minBibByCategory).sort((a, b) => {
+          return minBibByCategory[a] - minBibByCategory[b];
+        });
+
+        setCategories(sortedCats);
       })
       .catch(err => console.error(err));
   };
