@@ -38,6 +38,7 @@ class RacerViewSet(viewsets.ModelViewSet):
         racer.status = status
 
         if status == 'FINISH':
+            best_time = new_record
             # 1. 1차전인지 2차전인지 구분해서 저장
             if run_type == '1':
                 racer.run_1 = new_record
