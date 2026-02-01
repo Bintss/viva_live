@@ -5,18 +5,35 @@ import { API_BASE_URL } from './config';
 
 export default function Leaderboard() {
   const [racers, setRacers] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('ALL');
 
   const fetchData = () => {
     axios.get(`${API_BASE_URL}/api/racers/`)
-      .then(res => setRacers(res.data))
+      .then(res => {
+        const data = res.data;
+        setRacers(data);
+
+        // 1. 등록된 선수들의 부서 목록 추출 (중복 제거)
+        const cats = [...new Set(data.map(r => r.category).filter(c => c))].sort();
+        setCategories(cats);
+        
+        // 처음에 부서가 선택 안 되어 있으면 첫 번째 부서 자동 선택 (또는 ALL)
+        // (원하시면 'ALL'을 빼고 cats[0]을 기본값으로 해도 됩니다)
+      })
       .catch(err => console.error(err));
   };
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 5000); // 5초 주기
+    const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  // 2. 선택된 부서에 맞는 선수만 필터링
+  const filteredRacers = selectedCategory === 'ALL' 
+    ? racers 
+    : racers.filter(r => r.category === selectedCategory);
 
   const getRowStyle = (rank, status) => {
     if (status === 'DNS' || status === 'DNF' || status === 'DSQ') return "bg-gray-900 border-b border-gray-800 opacity-70";
@@ -36,17 +53,12 @@ export default function Leaderboard() {
 
   const renderSubRecord = (val) => {
     if (!val) return <span className="text-gray-800 text-[10px] sm:text-sm">-</span>;
-  
-    // 예외 상태인 경우 (텍스트)
     if (val === 'DNS') return <span className="text-gray-500 font-bold text-[10px] sm:text-xs">DNS</span>;
     if (val === 'DNF') return <span className="text-orange-500 font-bold text-[10px] sm:text-xs">DNF</span>;
     if (val === 'DSQ' || val === 'DQ') return <span className="text-red-500 font-bold text-[10px] sm:text-xs">DQ</span>;
-
-    // 정상 기록인 경우 (숫자)
     return <span className="font-mono text-gray-400 text-xs sm:text-lg">{val}</span>;
   };
 
-  // 최종 결과 표시 (Best - 크고 빨강)
   const renderResult = (r) => {
     switch (r.status) {
       case 'FINISH':
@@ -60,82 +72,94 @@ export default function Leaderboard() {
 
   return (
     <div className="bg-black rounded-xl shadow-2xl overflow-hidden border border-gray-800 flex flex-col h-[calc(100vh-140px)]">
-      {/* 헤더 */}
-      <div className="p-3 sm:p-5 bg-gray-900 border-b border-gray-800 flex justify-between items-center shrink-0">
-        <h2 className="text-lg sm:text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
-            <FaFlagCheckered className="text-red-600" /> LIVE RANKING
-        </h2>
-        <div className="flex items-center gap-2">
-            <span className="animate-pulse inline-block h-2 w-2 rounded-full bg-red-600"></span>
-            <span className="text-[10px] sm:text-xs text-gray-500 font-bold">REAL-TIME</span>
+      {/* 1. 헤더 */}
+      <div className="p-3 sm:p-4 bg-gray-900 border-b border-gray-800 shrink-0">
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="text-lg sm:text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
+              <FaFlagCheckered className="text-red-600" /> LIVE RANKING
+          </h2>
+          <div className="flex items-center gap-2">
+              <span className="animate-pulse inline-block h-2 w-2 rounded-full bg-red-600"></span>
+              <span className="text-[10px] sm:text-xs text-gray-500 font-bold">REAL-TIME</span>
+          </div>
+        </div>
+
+        {/* 2. 부서 선택 탭 (가로 스크롤) */}
+        <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+          <button
+            onClick={() => setSelectedCategory('ALL')}
+            className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all border ${
+              selectedCategory === 'ALL' 
+                ? 'bg-red-600 text-white border-red-600' 
+                : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700'
+            }`}
+          >
+            전체보기
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all border ${
+                selectedCategory === cat
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* 리스트 영역 */}
+      {/* 3. 리스트 영역 */}
       <div className="overflow-y-auto flex-1 custom-scrollbar relative">
         <table className="w-full text-left table-fixed">
-          {/* Sticky Header */}
           <thead className="bg-black text-gray-500 uppercase text-[10px] sm:text-sm font-bold tracking-wider sticky top-0 z-10 shadow-md">
             <tr>
               <th className="p-2 text-center w-[10%] bg-black">Rank</th>
               <th className="p-2 text-center w-[10%] bg-black">Bib</th>
               <th className="p-2 w-[20%] bg-black">Name</th>
               <th className="p-2 text-center w-[12%] bg-black">Div</th>
-              {/* ✅ R1, R2 추가됨 */}
               <th className="p-2 text-right w-[14%] bg-black">R1</th>
               <th className="p-2 text-right w-[14%] bg-black">R2</th>
               <th className="p-2 text-right w-[20%] bg-black text-white">Best</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-800">
-            {racers.map((r) => (
-              <tr key={r.id} className={`transition-all duration-300 ${getRowStyle(r.rank, r.status)}`}>
-                {/* Rank */}
-                <td className="p-2 text-center align-middle">
-                    <div className="flex justify-center items-center">{getRankBadge(r.rank, r.status)}</div>
-                </td>
-                
-                {/* Bib */}
-                <td className="p-2 text-center">
-                    <span className="font-mono text-sm sm:text-xl font-bold text-gray-300">{r.bib_number}</span>
-                </td>
-                
-                {/* Name */}
-                <td className="p-2 overflow-hidden">
-                    <span className="text-sm sm:text-lg font-semibold text-white whitespace-nowrap truncate block">
-                        {r.name || <span className="text-gray-700 text-xs">-</span>}
-                    </span>
-                </td>
-
-                {/* Div (부서) */}
-                <td className="p-2 text-center overflow-hidden">
-                     <span className="text-[10px] sm:text-xs font-bold text-gray-400 bg-gray-800 px-1.5 py-0.5 rounded whitespace-nowrap truncate block">
-                        {r.category || '-'}
-                     </span>
-                </td>
-
-                {/* ✅ Run 1 기록 */}
-                <td className="p-2 text-right border-l border-gray-800/50">
-                    {renderSubRecord(r.run_1)}
-                </td>
-
-                {/* ✅ Run 2 기록 */}
-                <td className="p-2 text-right">
-                    {renderSubRecord(r.run_2)}
-                </td>
-
-                {/* ✅ Best (최종) 기록 */}
-                <td className="p-2 text-right border-l border-gray-800">
-                    {renderResult(r)}
+            {filteredRacers.length > 0 ? (
+              filteredRacers.map((r) => (
+                <tr key={r.id} className={`transition-all duration-300 ${getRowStyle(r.rank, r.status)}`}>
+                  <td className="p-2 text-center align-middle">
+                      <div className="flex justify-center items-center">{getRankBadge(r.rank, r.status)}</div>
+                  </td>
+                  <td className="p-2 text-center">
+                      <span className="font-mono text-sm sm:text-xl font-bold text-gray-300">{r.bib_number}</span>
+                  </td>
+                  <td className="p-2 overflow-hidden">
+                      <span className="text-sm sm:text-lg font-semibold text-white whitespace-nowrap truncate block">
+                          {r.name || <span className="text-gray-700 text-xs">-</span>}
+                      </span>
+                  </td>
+                  <td className="p-2 text-center overflow-hidden">
+                       <span className="text-[10px] sm:text-xs font-bold text-gray-400 bg-gray-800 px-1.5 py-0.5 rounded whitespace-nowrap truncate block">
+                          {r.category || '-'}
+                       </span>
+                  </td>
+                  <td className="p-2 text-right border-l border-gray-800/50">{renderSubRecord(r.run_1)}</td>
+                  <td className="p-2 text-right">{renderSubRecord(r.run_2)}</td>
+                  <td className="p-2 text-right border-l border-gray-800">{renderResult(r)}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="7" className="p-10 text-center text-gray-600 font-bold text-sm">
+                  해당 부서에 선수가 없습니다.
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
-        
-        {racers.length === 0 && (
-          <div className="p-10 text-center text-gray-600 font-bold text-sm">경기 대기 중...</div>
-        )}
       </div>
     </div>
   );

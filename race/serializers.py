@@ -11,7 +11,7 @@ class RacerSerializer(serializers.ModelSerializer):
 
     def get_rank(self, obj):
         if obj.status == 'FINISH' and obj.record:
-            better = Racer.objects.filter(status='FINISH', record__lt=obj.record).count()
+            better = Racer.objects.filter(status='FINISH', record__lt=obj.record, category=obj.category).count()
             return better + 1
         return '-'
     
