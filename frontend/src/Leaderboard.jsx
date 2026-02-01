@@ -34,10 +34,16 @@ export default function Leaderboard() {
     return <span className="text-sm sm:text-xl font-bold text-gray-500">{rank}</span>;
   };
 
-  // 기록 표시 (1차/2차용 - 작고 회색)
-  const renderSubRecord = (time) => {
-    if (!time) return <span className="text-gray-700 text-[10px] sm:text-sm">-</span>;
-    return <span className="font-mono text-gray-400 text-xs sm:text-lg">{time}</span>;
+  const renderSubRecord = (val) => {
+    if (!val) return <span className="text-gray-800 text-[10px] sm:text-sm">-</span>;
+  
+    // 예외 상태인 경우 (텍스트)
+    if (val === 'DNS') return <span className="text-gray-500 font-bold text-[10px] sm:text-xs">DNS</span>;
+    if (val === 'DNF') return <span className="text-orange-500 font-bold text-[10px] sm:text-xs">DNF</span>;
+    if (val === 'DSQ' || val === 'DQ') return <span className="text-red-500 font-bold text-[10px] sm:text-xs">DQ</span>;
+
+    // 정상 기록인 경우 (숫자)
+    return <span className="font-mono text-gray-400 text-xs sm:text-lg">{val}</span>;
   };
 
   // 최종 결과 표시 (Best - 크고 빨강)
